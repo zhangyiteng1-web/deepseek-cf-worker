@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>获取 DeepSeek userToken</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 32px 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    h1 { font-size: 22px; color: #38bdf8; margin-bottom: 6px; text-align: center; }
+    .subtitle { color: #94a3b8; font-size: 13px; margin-bottom: 28px; text-align: center; }
+    .step {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px; height: 26px;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .step-title { font-size: 15px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
+    .step p { color: #94a3b8; font-size: 13px; line-height: 1.6; }
+    .code-block {
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 14px;
+      margin: 12px 0;
+      font-family: 'Menlo', 'Consolas', monospace;
+      font-size: 12px;
+      color: #86efac;
+      word-break: break-all;
+      line-height: 1.5;
+      max-height: 120px;
+      overflow-y: auto;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: #334155;
+      color: #e2e8f0;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .copy-btn:active { background: #2563eb; }
+    .copy-btn.copied { background: #166534; color: #4ade80; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+    .btn-primary:active { background: #1d4ed8; }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid #334155;
+      color: #e2e8f0;
+    }
+    .btn-outline:active { border-color: #2563eb; }
+    .result-box {
+      background: #0f172a;
+      border: 2px solid #4ade80;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+      display: none;
+    }
+    .result-box.show { display: block; }
+    .result-box .label { color: #4ade80; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+    .result-box .token {
+      font-family: 'Menlo', 'Consolas', monospace;
+      font-size: 12px;
+      color: #86efac;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+    .tip {
+      background: #1e293b;
+      border-left: 3px solid #f59e0b;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #fcd34d;
+      line-height: 1.6;
+    }
+    hr { border: none; border-top: 1px solid #334155; margin: 24px 0; }
+    .warning {
+      background: #450a0a;
+      border: 1px solid #dc2626;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #fca5a5;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔑 获取 DeepSeek userToken</h1>
+    <p class="subtitle">用于 Cloudflare Worker API 代理</p>
+
+    <!-- 方法一：电脑端 -->
+    <div class="step">
+      <span class="step-num">1</span>
+      <span class="step-title">电脑端（推荐）</span>
+      <p>用电脑浏览器打开 <a href="https://chat.deepseek.com" style="color:#38bdf8;" target="_blank">chat.deepseek.com</a> 并登录，然后按 <b>F12</b> → <b>Application</b> → <b>Local Storage</b> → <b>chat.deepseek.com</b> → 复制 <b>userToken</b> 的值。</p>
+    </div>
+
+    <!-- 方法二：手机端书签脚本 -->
+    <div class="step">
+      <span class="step-num">2</span>
+      <span class="step-title">手机端：书签脚本法</span>
+      <p>在手机浏览器中操作：</p>
+      <p style="margin-top:8px;">① 先打开 <b>chat.deepseek.com</b> 并登录</p>
+      <p>② 复制下方脚本，在地址栏长按粘贴，然后<b>在代码最前面手动加上 <code style="color:#fbbf24;">javascript:</code></b> 再回车</p>
+      <div class="code-block" style="position:relative;">
+        <button class="copy-btn" id="copyScriptBtn" onclick="copyScript()">复制</button>
+        <code id="scriptCode">(function(){var t=localStorage.getItem('userToken');if(t){var e=document.createElement('div');e.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';var n=document.createElement('div');n.style.cssText='background:#1e293b;border-radius:16px;padding:24px;width:100%;max-width:500px;text-align:center;';n.innerHTML='<h2 style="color:#4ade80;margin-bottom:12px;">✅ Token 获取成功</h2><div style="background:#0f172a;border-radius:8px;padding:12px;margin-bottom:16px;word-break:break-all;font-size:12px;color:#86efac;text-align:left;max-height:200px;overflow-y:auto;" id="ds-token">'+t+'</div><button style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;margin:4px;cursor:pointer;" onclick="navigator.clipboard.writeText(\''+t.replace(/'/g,"\\'")+'\').then(function(){this.textContent=\'✅ 已复制\';this.style.background=\'#166534\'}.bind(this))">📋 复制 Token</button>';e.appendChild(n);document.body.appendChild(e)}else{alert('❌ 未找到 userToken，请确认已登录 chat.deepseek.com')}})();</code>
+      </div>
+      <p style="font-size:11px; color:#64748b; margin-top:4px;">如果地址栏不允许粘贴，请先把这段代码添加到书签，再从书签中打开。</p>
+    </div>
+
+    <!-- 方法三：直接在这里填入 -->
+    <div class="step">
+      <span class="step-num">3</span>
+      <span class="step-title">已获取到 Token？在这里验证</span>
+      <p>将你的 token 粘贴到下方，点击验证：</p>
+      <textarea id="tokenInput" placeholder="粘贴你的 userToken（以 eyJ... 开头）" style="width:100%;height:80px;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:12px;color:#e2e8f0;font-size:12px;margin-top:8px;resize:vertical;font-family:Menlo,Consolas,monospace;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-primary" onclick="verifyToken()" style="flex:1;">验证 Token</button>
+        <button class="btn btn-outline" onclick="copyToken()" style="flex:1;">复制 Token</button>
+      </div>
+      <div id="verifyResult" class="result-box"></div>
+    </div>
+
+    <div class="tip">
+      💡 <b>提示：</b>userToken 是以 <b>eyJhbGciOiJIUzUxMiIs...</b> 开头的长字符串。如果获取到的不是这个格式，说明可能取错了。
+    </div>
+
+    <div class="warning">
+      ⚠️ <b>安全提醒：</b>Token 相当于你的账号密码，<b>不要分享给任何人</b>。在 Cloudflare 配置时使用 <b>wrangler secret</b> 加密存储，不要直接写在代码里。
+    </div>
+  </div>
+
+  <script>
+    function copyScript() {
+      const code = document.getElementById('scriptCode').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copyScriptBtn');
+        btn.textContent = '✅ 已复制';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+      }).catch(() => {
+        alert('复制失败，请手动长按选择复制');
+      });
+    }
+
+    function copyToken() {
+      const token = document.getElementById('tokenInput').value.trim();
+      if (!token) { alert('请先粘贴 token'); return; }
+      navigator.clipboard.writeText(token).then(() => {
+        alert('✅ Token 已复制到剪贴板');
+      }).catch(() => {
+        alert('复制失败，请手动选择复制');
+      });
+    }
+
+    async function verifyToken() {
+      const token = document.getElementById('tokenInput').value.trim();
+      const resultBox = document.getElementById('verifyResult');
+
+      if (!token) {
+        resultBox.className = 'result-box show';
+        resultBox.innerHTML = '<div class="label">❌ 请输入 token</div>';
+        return;
+      }
+
+      resultBox.className = 'result-box show';
+      resultBox.innerHTML = '<div class="label">⏳ 正在验证...</div>';
+
+      try {
+        const resp = await fetch('https://chat.deepseek.com/api/v0/users/current', {
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': '*/*',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          }
+        });
+
+        if (resp.ok) {
+          const data = await resp.json();
+          const email = data?.data?.biz_data?.user?.email || data?.biz_data?.user?.email || '未知';
+          resultBox.innerHTML = '<div class="label">✅ Token 有效！</div>' +
+            '<div class="token" style="margin-bottom:8px;">账号：' + email + '</div>' +
+            '<div class="token" style="font-size:11px;color:#94a3b8;">现在可以将此 token 配置到 Cloudflare Worker 的环境变量中</div>';
+        } else {
+          resultBox.innerHTML = '<div class="label">❌ Token 无效</div>' +
+            '<div class="token" style="color:#fca5a5;">HTTP ' + resp.status + ' — 请确认 token 正确且未过期</div>';
+        }
+      } catch (e) {
+        resultBox.innerHTML = '<div class="label">❌ 网络错误</div>' +
+          '<div class="token" style="color:#fca5a5;">无法连接到 DeepSeek，请检查网络</div>';
+      }
+    }
+  </script>
+</body>
+</html>
