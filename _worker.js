@@ -408,51 +408,151 @@ function serveTokenPage() {
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>获取 DeepSeek userToken</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:20px}.container{max-width:500px;margin:0 auto;background:#1e293b;border-radius:16px;padding:32px 24px;box-shadow:0 20px 40px rgba(0,0,0,.3)}h1{font-size:22px;color:#38bdf8;margin-bottom:6px;text-align:center}.subtitle{color:#94a3b8;font-size:13px;margin-bottom:28px;text-align:center}.form-group{margin-bottom:16px}.form-group label{display:block;font-size:13px;color:#94a3b8;margin-bottom:6px}.form-group input{width:100%;padding:12px 14px;background:#0f172a;border:1px solid #475569;border-radius:8px;color:#e2e8f0;font-size:15px;outline:none;transition:border-color .2s}.form-group input:focus{border-color:#2563eb}.btn{display:block;width:100%;padding:14px;margin:8px 0;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s}.btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}.btn-primary:disabled{opacity:.5;cursor:not-allowed}.btn-outline{background:transparent;border:2px solid #334155;color:#e2e8f0}.result-box{background:#0f172a;border:2px solid #4ade80;border-radius:10px;padding:16px;margin-top:16px;display:none}.result-box.show{display:block}.result-box.error{border-color:#dc2626}.result-box .label{font-size:13px;font-weight:600;margin-bottom:8px}.result-box .label.success{color:#4ade80}.result-box .label.error{color:#fca5a5}.result-box .token{font-family:Menlo,Consolas,monospace;font-size:12px;color:#86efac;word-break:break-all;line-height:1.5;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:10px;max-height:120px;overflow-y:auto;margin-bottom:10px}.result-box .email{color:#94a3b8;font-size:12px;margin-bottom:4px}.copy-btn-sm{background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:6px 16px;font-size:12px;cursor:pointer;margin-right:8px}.copy-btn-sm.copied{background:#166534;color:#4ade80}.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:#fff;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}@keyframes spin{to{transform:rotate(360deg)}}.tip{background:#1e293b;border-left:3px solid #f59e0b;border-radius:6px;padding:12px;margin-top:20px;font-size:12px;color:#fcd34d;line-height:1.6}.warning{background:#450a0a;border:1px solid #dc2626;border-radius:8px;padding:12px;margin-top:16px;font-size:12px;color:#fca5a5;line-height:1.6}.divider{display:flex;align-items:center;margin:24px 0;color:#475569;font-size:12px}.divider::before,.divider::after{content:'';flex:1;border-top:1px solid #334155}.divider span{padding:0 12px}.manual-section{display:none}.manual-section.show{display:block}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:20px}.container{max-width:560px;margin:0 auto;background:#1e293b;border-radius:16px;padding:32px 24px;box-shadow:0 20px 40px rgba(0,0,0,.3)}h1{font-size:22px;color:#38bdf8;margin-bottom:6px;text-align:center}.subtitle{color:#94a3b8;font-size:13px;margin-bottom:24px;text-align:center}.step{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:18px;margin-bottom:14px;transition:border-color .3s}.step.active{border-color:#2563eb}.step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#2563eb;color:#fff;border-radius:50%;font-size:14px;font-weight:700;margin-right:10px;flex-shrink:0;vertical-align:middle}.step-num.done{background:#166534;color:#4ade80}.step-title{font-size:15px;font-weight:600;color:#f1f5f9;vertical-align:middle}.step p{color:#94a3b8;font-size:13px;line-height:1.6;margin-top:8px}.btn{display:block;width:100%;padding:14px;margin:8px 0;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s}.btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8;transform:translateY(-1px)}.btn-primary:disabled{background:#475569;cursor:not-allowed;transform:none}.btn-success{background:#166534;color:#4ade80}.btn-success:hover{background:#15803d}.btn-outline{background:transparent;border:2px solid #334155;color:#e2e8f0}.btn-outline:hover{border-color:#475569}.code-block{background:#0f172a;border:1px solid #475569;border-radius:8px;padding:14px;margin:12px 0;font-family:Menlo,Consolas,monospace;font-size:12px;color:#86efac;word-break:break-all;line-height:1.5;max-height:100px;overflow-y:auto;position:relative}.copy-btn{position:absolute;top:8px;right:8px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer}.copy-btn.copied{background:#166534;color:#4ade80}.result-box{background:#0f172a;border:2px solid #4ade80;border-radius:10px;padding:16px;margin-top:16px;display:none}.result-box.show{display:block}.result-box.error{border-color:#dc2626}.result-box .label{font-size:13px;font-weight:600;margin-bottom:8px}.result-box .label.success{color:#4ade80}.result-box .label.error{color:#fca5a5}.result-box .token{font-family:Menlo,Consolas,monospace;font-size:12px;color:#86efac;word-break:break-all;line-height:1.5;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:10px;max-height:120px;overflow-y:auto;margin-bottom:10px}.result-box .email{color:#94a3b8;font-size:12px;margin-bottom:4px}.copy-btn-sm{background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:6px 16px;font-size:12px;cursor:pointer;margin-right:8px}.copy-btn-sm.copied{background:#166534;color:#4ade80}.warning{background:#450a0a;border:1px solid #dc2626;border-radius:8px;padding:12px;margin-top:16px;font-size:12px;color:#fca5a5;line-height:1.6}.inline-code{background:#334155;color:#fbbf24;padding:2px 6px;border-radius:4px;font-size:12px;font-family:Menlo,Consolas,monospace}input{width:100%;padding:12px 14px;background:#0f172a;border:1px solid #475569;border-radius:8px;color:#e2e8f0;font-size:15px;outline:none;transition:border-color .2s}input:focus{border-color:#2563eb}.popup-hint{background:#1e293b;border-left:3px solid #f59e0b;border-radius:6px;padding:12px;margin-top:20px;font-size:12px;color:#fcd34d;line-height:1.6;display:none}.popup-hint.show{display:block}.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;animation:pulse 1.5s infinite}.status-dot.waiting{background:#f59e0b}.status-dot.success{background:#4ade80;animation:none}.status-dot.error{background:#dc2626;animation:none}@keyframes pulse{0%,to{opacity:1}50%{opacity:.4}}
 </style>
 </head>
 <body>
 <div class="container">
 <h1>获取 DeepSeek userToken</h1>
-<p class="subtitle">输入 DeepSeek 账号密码，自动获取 Token</p>
+<p class="subtitle">弹出登录窗口 → 完成人机验证 → 自动获取 Token</p>
 
-<div class="form-group">
-<label>邮箱</label>
-<input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email">
+<div class="step" id="step1">
+<span class="step-num" id="num1">1</span><span class="step-title">点击获取 Token</span>
+<p>点击下方按钮，将弹出 DeepSeek 登录窗口。请在弹窗中完成登录，包括人机验证（如滑块验证、点击验证等）。</p>
+<button class="btn btn-primary" id="getTokenBtn" onclick="startGetToken()">获取 Token</button>
+<div class="popup-hint" id="popupHint">弹窗已打开，请在弹窗中完成登录。如果弹窗被拦截，请点击浏览器地址栏的拦截提示并允许本站弹窗。</div>
 </div>
-<div class="form-group">
-<label>密码</label>
-<input type="password" id="passwordInput" placeholder="DeepSeek 登录密码" autocomplete="current-password">
-</div>
-<button class="btn btn-primary" id="loginBtn" onclick="doLogin()">获取 Token</button>
-<div id="resultBox" class="result-box"></div>
 
-<div class="tip"><b>注意：</b>Token 会直接通过浏览器请求 DeepSeek 官方 API，不会经过本服务器。</div>
-<div class="warning"><b>安全提醒：</b>Token 相当于密码，<b>不要分享给任何人</b>。</div>
+<div class="step" id="step2" style="display:none">
+<span class="step-num" id="num2">2</span><span class="step-title">登录后提取 Token</span>
+<p>在 DeepSeek 弹窗中登录成功后（能看到聊天界面即表示成功），在弹窗中按 <span class="inline-code">F12</span> 打开开发者工具，切换到 <span class="inline-code">Console</span>（控制台）标签，粘贴下方代码并回车。</p>
+<div class="code-block">
+<button class="copy-btn" id="copyScriptBtn" onclick="copyExtractScript()">复制</button>
+<code id="extractScript"></code>
+</div>
+<p style="font-size:12px;color:#94a3b8;margin-top:6px">粘贴后 Token 会自动传回此页面，无需手动操作。</p>
+<p style="margin-top:6px"><b>备选方案：</b>如果 Console 方式不生效，可在弹窗中手动按 <span class="inline-code">F12</span> → <span class="inline-code">Application</span> → <span class="inline-code">Local Storage</span> → <span class="inline-code">chat.deepseek.com</span> → 找到 <span class="inline-code">userToken</span> 并复制值，粘贴到下方输入框。</p>
+</div>
 
-<div class="divider"><span>其他方式</span></div>
-<button class="btn btn-outline" onclick="toggleManual()" id="manualToggle">展开手动获取方式</button>
-<div class="manual-section" id="manualSection">
-<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:18px;margin-bottom:16px;margin-top:12px">
-<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:#2563eb;color:#fff;border-radius:50%;font-size:13px;font-weight:700;margin-right:8px;vertical-align:middle">1</span>
-<span style="font-size:15px;font-weight:600;color:#f1f5f9">电脑端</span>
-<p style="color:#94a3b8;font-size:13px;line-height:1.6;margin-top:8px">打开 <a href="https://chat.deepseek.com" target="_blank" style="color:#38bdf8">chat.deepseek.com</a> 并登录，按 <b>F12</b> → <b>Application</b> → <b>Local Storage</b> → <b>chat.deepseek.com</b> → 复制 <b>userToken</b></p>
+<div class="step" id="step3">
+<span class="step-num" id="num3">3</span><span class="step-title">验证 Token</span>
+<p>Token 获取后会自动显示并验证，也可手动粘贴：</p>
+<input type="text" id="tokenInput" placeholder="Token 获取后自动显示在此处，也可手动粘贴（以 eyJ... 开头）" style="margin-top:8px">
+<div style="display:flex;gap:8px;margin-top:8px">
+<button class="btn btn-primary" onclick="verifyToken()" style="flex:1">验证 Token</button>
+<button class="btn btn-outline" onclick="copyToken()" style="flex:1">复制 Token</button>
 </div>
-<div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:18px;margin-bottom:16px">
-<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:#2563eb;color:#fff;border-radius:50%;font-size:13px;font-weight:700;margin-right:8px;vertical-align:middle">2</span>
-<span style="font-size:15px;font-weight:600;color:#f1f5f9">手机端书签脚本</span>
-<p style="color:#94a3b8;font-size:13px;line-height:1.6;margin-top:8px">① 登录 chat.deepseek.com<br>② 添加书签，网址填下方代码<br>③ 在 DeepSeek 页面点击书签</p>
-<div style="background:#0f172a;border:1px solid #475569;border-radius:8px;padding:14px;margin:12px 0;font-family:Menlo,Consolas,monospace;font-size:12px;color:#86efac;word-break:break-all;line-height:1.5;max-height:120px;overflow-y:auto;position:relative">
-<button style="position:absolute;top:8px;right:8px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer" onclick="copyScript()">复制</button>
-<code id="scriptCode">(function(){var t=localStorage.getItem('userToken');if(t){var e=document.createElement('div');e.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';var n=document.createElement('div');n.style.cssText='background:#1e293b;border-radius:16px;padding:24px;width:100%;max-width:500px;text-align:center';n.innerHTML='<h2 style="color:#4ade80;margin-bottom:12px">Token 获取成功</h2><div style="background:#0f172a;border-radius:8px;padding:12px;margin-bottom:16px;word-break:break-all;font-size:12px;color:#86efac;text-align:left;max-height:200px;overflow-y:auto">'+t+'</div><button style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;margin:4px;cursor:pointer" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent).then(function(){this.textContent=\\'已复制\\';this.style.background=\\'#166534\\'}.bind(this))">复制 Token</button>';e.appendChild(n);document.body.appendChild(e)}else{alert('未找到 userToken')}})();</code>
+<div id="verifyBox" class="result-box"></div>
 </div>
-</div>
-</div>
+
+<div class="warning"><b>安全提醒：</b>Token 相当于密码，<b>不要分享给任何人</b>。本页面完全在浏览器本地运行，不会上传你的任何信息。</div>
 </div>
 <script>
-function toggleManual(){var s=document.getElementById('manualSection');var b=document.getElementById('manualToggle');if(s.classList.contains('show')){s.classList.remove('show');b.textContent='展开手动获取方式'}else{s.classList.add('show');b.textContent='收起手动获取方式'}}
-function copyScript(){var code=document.getElementById('scriptCode').textContent;navigator.clipboard.writeText(code).then(function(){alert('已复制，请添加到书签')})}
-async function doLogin(){var email=document.getElementById('emailInput').value.trim();var password=document.getElementById('passwordInput').value;var btn=document.getElementById('loginBtn');var box=document.getElementById('resultBox');if(!email||!password){box.className='result-box error show';box.innerHTML='<div class="label error">请输入邮箱和密码</div>';return}btn.disabled=true;btn.innerHTML='<span class="spinner"></span>正在登录...';box.className='result-box';box.style.display='none';try{var resp=await fetch('https://chat.deepseek.com/api/v0/users/login',{method:'POST',headers:{'Content-Type':'application/json','Accept':'*/*','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36','Origin':'https://chat.deepseek.com','Referer':'https://chat.deepseek.com/','X-App-Version':'20241129.1','X-Client-Locale':'zh_CN','X-Client-Platform':'web','X-Client-Version':'1.8.0'},body:JSON.stringify({email:email,mobile:'',password:password,area_code:'',device_id:'',os:'web'})});var data=await resp.json();if(data.code===0&&data.data&&data.data.biz_data&&data.data.biz_data.user&&data.data.biz_data.user.token){var token=data.data.biz_data.user.token;var email2=data.data.biz_data.user.email||email;box.className='result-box show';box.innerHTML='<div class="label success">登录成功</div><div class="email">账号：'+email2+'</div><div class="token">'+token+'</div><button class="copy-btn-sm" onclick="var t=this.previousElementSibling.textContent;navigator.clipboard.writeText(t);this.textContent=\\'已复制\\';this.classList.add(\\'copied\\');var self=this;setTimeout(function(){self.textContent=\\'复制 Token\\';self.classList.remove(\\'copied\\')},2000)">复制 Token</button>'}else{var msg=data.msg||(data.data&&data.data.biz_msg)||'登录失败';box.className='result-box error show';box.innerHTML='<div class="label error">'+msg+'</div>';if(data.code===403){box.innerHTML+='<div class="token" style="color:#fca5a5;margin-top:8px">可能需要验证码，请尝试在浏览器中手动登录</div>'}}}catch(e){box.className='result-box error show';box.innerHTML='<div class="label error">网络错误</div><div class="token" style="color:#fca5a5">'+e.message+'</div>'}btn.disabled=false;btn.textContent='获取 Token'}
+var dsPopup = null;
+
+// Extract script that runs in the DeepSeek popup's console
+var extractCode = 'var t=localStorage.getItem("userToken");if(t){window.opener.postMessage({type:"deepseek-token",token:t},"*");console.log("Token sent successfully!")}else{console.log("No token found. Please make sure you are logged in at chat.deepseek.com")}';
+document.getElementById('extractScript').textContent = extractCode;
+
+function startGetToken() {
+  dsPopup = window.open('https://chat.deepseek.com/', 'deepseek_login', 'width=500,height=700,left=' + (screen.width-500)/2 + ',top=' + (screen.height-700)/2);
+  if (!dsPopup) {
+    alert('弹窗被浏览器拦截！请点击地址栏的拦截提示，允许本站弹窗后重试。');
+    document.getElementById('popupHint').classList.add('show');
+    return;
+  }
+  document.getElementById('popupHint').classList.add('show');
+  document.getElementById('step2').style.display = '';
+  document.getElementById('step2').classList.add('active');
+  document.getElementById('num1').classList.add('done');
+  document.getElementById('getTokenBtn').disabled = true;
+  document.getElementById('getTokenBtn').textContent = '弹窗已打开，请完成登录';
+  document.getElementById('step2').scrollIntoView({ behavior: 'smooth' });
+
+  // Monitor popup for closure
+  var checkPopup = setInterval(function() {
+    if (dsPopup && dsPopup.closed) {
+      clearInterval(checkPopup);
+      dsPopup = null;
+      document.getElementById('getTokenBtn').disabled = false;
+      document.getElementById('getTokenBtn').textContent = '重新获取 Token';
+    }
+  }, 1000);
+}
+
+// Listen for token from the popup via postMessage
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'deepseek-token' && e.data.token) {
+    document.getElementById('tokenInput').value = e.data.token;
+    document.getElementById('num2').classList.add('done');
+    document.getElementById('step3').scrollIntoView({ behavior: 'smooth' });
+    verifyToken();
+  }
+});
+
+function copyExtractScript() {
+  navigator.clipboard.writeText(extractCode).then(function() {
+    var btn = document.getElementById('copyScriptBtn');
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
+  }).catch(function() {
+    // Fallback: select the text manually
+    var code = document.getElementById('extractScript');
+    var range = document.createRange();
+    range.selectNodeContents(code);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    alert('请手动 Ctrl+C 复制选中的代码');
+  });
+}
+
+function copyToken() {
+  var token = document.getElementById('tokenInput').value.trim();
+  if (!token) { alert('请先获取或粘贴 Token'); return; }
+  navigator.clipboard.writeText(token).then(function() {
+    var btn = event.target;
+    var orig = btn.textContent;
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  }).catch(function() { alert('复制失败，请手动选择复制'); });
+}
+
+async function verifyToken() {
+  var token = document.getElementById('tokenInput').value.trim();
+  var box = document.getElementById('verifyBox');
+  if (!token) { box.className = 'result-box error show'; box.innerHTML = '<div class="label error">请输入 Token</div>'; return; }
+  box.className = 'result-box show'; box.innerHTML = '<div class="label"><span class="status-dot waiting"></span>正在验证...</div>';
+  try {
+    var resp = await fetch('https://chat.deepseek.com/api/v0/users/current', { headers: { 'Authorization': 'Bearer ' + token, 'Accept': '*/*', 'User-Agent': 'Mozilla/5.0' } });
+    if (resp.ok) {
+      var data = await resp.json();
+      var email = (data && data.data && data.data.biz_data && data.data.biz_data.user && data.data.biz_data.user.email) || '未知';
+      document.getElementById('num3').classList.add('done');
+      box.className = 'result-box show';
+      box.innerHTML = '<div class="label success"><span class="status-dot success"></span>Token 有效！</div><div class="email">账号：' + email + '</div><div class="token">' + token + '</div><button class="copy-btn-sm" onclick="var t=this.previousElementSibling.textContent;navigator.clipboard.writeText(t);this.textContent=\\'已复制\\';this.classList.add(\\'copied\\');var s=this;setTimeout(function(){s.textContent=\\'复制 Token\\';s.classList.remove(\\'copied\\')},2000)">复制 Token</button>';
+    } else {
+      box.className = 'result-box error show';
+      box.innerHTML = '<div class="label error"><span class="status-dot error"></span>Token 无效</div><div class="token" style="color:#fca5a5">HTTP ' + resp.status + ' - 请确认 Token 正确且未过期</div>';
+    }
+  } catch (e) {
+    box.className = 'result-box error show';
+    box.innerHTML = '<div class="label error"><span class="status-dot error"></span>网络错误</div><div class="token" style="color:#fca5a5">' + e.message + '</div>';
+  }
+}
+
+// Check URL params for token (from bookmarklet fallback)
+(function() {
+  var params = new URLSearchParams(location.search);
+  var token = params.get('token');
+  if (token) {
+    document.getElementById('tokenInput').value = token;
+    verifyToken();
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
+  }
+})();
 </script>
 </body>
 </html>`;
