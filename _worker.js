@@ -405,158 +405,275 @@ function serveTokenPage() {
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>获取 DeepSeek userToken</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:20px}.container{max-width:560px;margin:0 auto;background:#1e293b;border-radius:16px;padding:32px 24px;box-shadow:0 20px 40px rgba(0,0,0,.3)}h1{font-size:22px;color:#38bdf8;margin-bottom:6px;text-align:center}.subtitle{color:#94a3b8;font-size:13px;margin-bottom:24px;text-align:center}.step{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:18px;margin-bottom:14px;transition:border-color .3s}.step.active{border-color:#2563eb}.step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#2563eb;color:#fff;border-radius:50%;font-size:14px;font-weight:700;margin-right:10px;flex-shrink:0;vertical-align:middle}.step-num.done{background:#166534;color:#4ade80}.step-title{font-size:15px;font-weight:600;color:#f1f5f9;vertical-align:middle}.step p{color:#94a3b8;font-size:13px;line-height:1.6;margin-top:8px}.btn{display:block;width:100%;padding:14px;margin:8px 0;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s}.btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8;transform:translateY(-1px)}.btn-primary:disabled{background:#475569;cursor:not-allowed;transform:none}.btn-success{background:#166534;color:#4ade80}.btn-success:hover{background:#15803d}.btn-outline{background:transparent;border:2px solid #334155;color:#e2e8f0}.btn-outline:hover{border-color:#475569}.code-block{background:#0f172a;border:1px solid #475569;border-radius:8px;padding:14px;margin:12px 0;font-family:Menlo,Consolas,monospace;font-size:12px;color:#86efac;word-break:break-all;line-height:1.5;max-height:100px;overflow-y:auto;position:relative}.copy-btn{position:absolute;top:8px;right:8px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer}.copy-btn.copied{background:#166534;color:#4ade80}.result-box{background:#0f172a;border:2px solid #4ade80;border-radius:10px;padding:16px;margin-top:16px;display:none}.result-box.show{display:block}.result-box.error{border-color:#dc2626}.result-box .label{font-size:13px;font-weight:600;margin-bottom:8px}.result-box .label.success{color:#4ade80}.result-box .label.error{color:#fca5a5}.result-box .token{font-family:Menlo,Consolas,monospace;font-size:12px;color:#86efac;word-break:break-all;line-height:1.5;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:10px;max-height:120px;overflow-y:auto;margin-bottom:10px}.result-box .email{color:#94a3b8;font-size:12px;margin-bottom:4px}.copy-btn-sm{background:#334155;color:#e2e8f0;border:none;border-radius:6px;padding:6px 16px;font-size:12px;cursor:pointer;margin-right:8px}.copy-btn-sm.copied{background:#166534;color:#4ade80}.warning{background:#450a0a;border:1px solid #dc2626;border-radius:8px;padding:12px;margin-top:16px;font-size:12px;color:#fca5a5;line-height:1.6}.inline-code{background:#334155;color:#fbbf24;padding:2px 6px;border-radius:4px;font-size:12px;font-family:Menlo,Consolas,monospace}input{width:100%;padding:12px 14px;background:#0f172a;border:1px solid #475569;border-radius:8px;color:#e2e8f0;font-size:15px;outline:none;transition:border-color .2s}input:focus{border-color:#2563eb}.popup-hint{background:#1e293b;border-left:3px solid #f59e0b;border-radius:6px;padding:12px;margin-top:20px;font-size:12px;color:#fcd34d;line-height:1.6;display:none}.popup-hint.show{display:block}.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;animation:pulse 1.5s infinite}.status-dot.waiting{background:#f59e0b}.status-dot.success{background:#4ade80;animation:none}.status-dot.error{background:#dc2626;animation:none}@keyframes pulse{0%,to{opacity:1}50%{opacity:.4}}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column}.top-bar{background:#1e293b;padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #334155;flex-shrink:0}.top-bar h1{font-size:16px;color:#38bdf8;white-space:nowrap}.top-bar .status{font-size:12px;color:#94a3b8;margin-left:auto}.top-bar .status.found{color:#4ade80}.iframe-wrap{flex:1;position:relative;background:#000}.iframe-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}.result-bar{background:#1e293b;padding:14px 16px;border-top:1px solid #334155;flex-shrink:0;display:none}.result-bar.show{display:block}.result-bar .token-row{display:flex;gap:8px;align-items:center}.result-bar input{flex:1;padding:10px 12px;background:#0f172a;border:1px solid #475569;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none}.result-bar input:focus{border-color:#2563eb}.result-bar .btn-sm{padding:10px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}.btn-copy{background:#2563eb;color:#fff}.btn-copy.copied{background:#166534;color:#4ade80}.result-bar .email{font-size:12px;color:#94a3b8;margin-top:6px}.result-bar .label{font-size:12px;font-weight:600;margin-bottom:4px}.label.success{color:#4ade80}.label.error{color:#fca5a5}.label.waiting{color:#f59e0b}.manual-section{background:#0f172a;padding:14px 16px;border-top:1px solid #334155;flex-shrink:0}.manual-section .toggle{font-size:12px;color:#94a3b8;text-align:center;padding:6px;cursor:pointer}.manual-section .content{display:none;margin-top:8px}.manual-section .content.show{display:block}.manual-section textarea{width:100%;height:60px;padding:10px;background:#0f172a;border:1px solid #475569;border-radius:8px;color:#e2e8f0;font-size:12px;font-family:Menlo,Consolas,monospace;resize:vertical;outline:none}.manual-section textarea:focus{border-color:#2563eb}.manual-section .btn-row{display:flex;gap:8px;margin-top:8px}.manual-section .btn-row button{flex:1;padding:10px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}.btn-verify{background:#2563eb;color:#fff}.btn-paste{background:transparent;border:2px solid #334155;color:#e2e8f0}.howto{background:#1e293b;padding:12px 16px;font-size:11px;color:#94a3b8;line-height:1.6;flex-shrink:0}.howto a{color:#38bdf8}.howto b{color:#fbbf24}.loading-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10}.loading-overlay.hidden{display:none}.spinner{width:40px;height:40px;border:3px solid #334155;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}@keyframes spin{to{transform:rotate(360deg)}}.loading-text{color:#94a3b8;font-size:13px}
 </style>
 </head>
 <body>
-<div class="container">
-<h1>获取 DeepSeek userToken</h1>
-<p class="subtitle">弹出登录窗口 → 完成人机验证 → 自动获取 Token</p>
-
-<div class="step" id="step1">
-<span class="step-num" id="num1">1</span><span class="step-title">点击获取 Token</span>
-<p>点击下方按钮，将弹出 DeepSeek 登录窗口。请在弹窗中完成登录，包括人机验证（如滑块验证、点击验证等）。</p>
-<button class="btn btn-primary" id="getTokenBtn" onclick="startGetToken()">获取 Token</button>
-<div class="popup-hint" id="popupHint">弹窗已打开，请在弹窗中完成登录。如果弹窗被拦截，请点击浏览器地址栏的拦截提示并允许本站弹窗。</div>
+<div class="top-bar">
+<h1>获取 DeepSeek Token</h1>
+<span class="status" id="statusText">加载中...</span>
 </div>
-
-<div class="step" id="step2" style="display:none">
-<span class="step-num" id="num2">2</span><span class="step-title">登录后提取 Token</span>
-<p>在 DeepSeek 弹窗中登录成功后（能看到聊天界面即表示成功），在弹窗中按 <span class="inline-code">F12</span> 打开开发者工具，切换到 <span class="inline-code">Console</span>（控制台）标签，粘贴下方代码并回车。</p>
-<div class="code-block">
-<button class="copy-btn" id="copyScriptBtn" onclick="copyExtractScript()">复制</button>
-<code id="extractScript"></code>
+<div class="iframe-wrap" id="iframeWrap">
+<div class="loading-overlay" id="loadingOverlay">
+<div class="spinner"></div>
+<div class="loading-text">正在加载 DeepSeek 登录页...</div>
 </div>
-<p style="font-size:12px;color:#94a3b8;margin-top:6px">粘贴后 Token 会自动传回此页面，无需手动操作。</p>
-<p style="margin-top:6px"><b>备选方案：</b>如果 Console 方式不生效，可在弹窗中手动按 <span class="inline-code">F12</span> → <span class="inline-code">Application</span> → <span class="inline-code">Local Storage</span> → <span class="inline-code">chat.deepseek.com</span> → 找到 <span class="inline-code">userToken</span> 并复制值，粘贴到下方输入框。</p>
+<iframe id="dsFrame" src="/proxy/" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
 </div>
-
-<div class="step" id="step3">
-<span class="step-num" id="num3">3</span><span class="step-title">验证 Token</span>
-<p>Token 获取后会自动显示并验证，也可手动粘贴：</p>
-<input type="text" id="tokenInput" placeholder="Token 获取后自动显示在此处，也可手动粘贴（以 eyJ... 开头）" style="margin-top:8px">
-<div style="display:flex;gap:8px;margin-top:8px">
-<button class="btn btn-primary" onclick="verifyToken()" style="flex:1">验证 Token</button>
-<button class="btn btn-outline" onclick="copyToken()" style="flex:1">复制 Token</button>
+<div class="result-bar" id="resultBar">
+<div class="label" id="resultLabel">Token 获取成功</div>
+<div class="token-row">
+<input type="text" id="tokenInput" placeholder="Token 将自动显示在此处..." readonly>
+<button class="btn-sm btn-copy" id="copyBtn" onclick="copyResult()">复制</button>
 </div>
-<div id="verifyBox" class="result-box"></div>
+<div class="email" id="emailText"></div>
 </div>
-
-<div class="warning"><b>安全提醒：</b>Token 相当于密码，<b>不要分享给任何人</b>。本页面完全在浏览器本地运行，不会上传你的任何信息。</div>
+<div class="manual-section">
+<div class="toggle" onclick="toggleManual()">如果自动获取失败，点此手动输入 Token ▼</div>
+<div class="content" id="manualContent">
+<textarea id="manualToken" placeholder="粘贴 userToken（以 eyJ... 开头）"></textarea>
+<div class="btn-row">
+<button class="btn-verify" onclick="verifyManual()">验证</button>
+<button class="btn-paste" onclick="pasteFromClipboard()">从剪贴板粘贴</button>
+</div>
+</div>
+</div>
+<div class="howto">
+<b>手机操作说明：</b>在上方页面中登录 DeepSeek（如遇人机验证正常完成即可），登录成功后 Token 会自动出现在下方。如未自动获取，请用手机浏览器打开 <a href="https://chat.deepseek.com" target="_blank">chat.deepseek.com</a> 登录，然后复制 userToken 粘贴到上方输入框。
 </div>
 <script>
-var dsPopup = null;
+var pollTimer = null;
+var pollCount = 0;
 
-// Extract script that runs in the DeepSeek popup's console
-var extractCode = 'var t=localStorage.getItem("userToken");if(t){window.opener.postMessage({type:"deepseek-token",token:t},"*");console.log("Token sent successfully!")}else{console.log("No token found. Please make sure you are logged in at chat.deepseek.com")}';
-document.getElementById('extractScript').textContent = extractCode;
-
-function startGetToken() {
-  dsPopup = window.open('https://chat.deepseek.com/', 'deepseek_login', 'width=500,height=700,left=' + (screen.width-500)/2 + ',top=' + (screen.height-700)/2);
-  if (!dsPopup) {
-    alert('弹窗被浏览器拦截！请点击地址栏的拦截提示，允许本站弹窗后重试。');
-    document.getElementById('popupHint').classList.add('show');
-    return;
-  }
-  document.getElementById('popupHint').classList.add('show');
-  document.getElementById('step2').style.display = '';
-  document.getElementById('step2').classList.add('active');
-  document.getElementById('num1').classList.add('done');
-  document.getElementById('getTokenBtn').disabled = true;
-  document.getElementById('getTokenBtn').textContent = '弹窗已打开，请完成登录';
-  document.getElementById('step2').scrollIntoView({ behavior: 'smooth' });
-
-  // Monitor popup for closure
-  var checkPopup = setInterval(function() {
-    if (dsPopup && dsPopup.closed) {
-      clearInterval(checkPopup);
-      dsPopup = null;
-      document.getElementById('getTokenBtn').disabled = false;
-      document.getElementById('getTokenBtn').textContent = '重新获取 Token';
-    }
-  }, 1000);
-}
-
-// Listen for token from the popup via postMessage
+// Listen for token from iframe via postMessage (injected by proxy)
 window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'deepseek-token' && e.data.token) {
-    document.getElementById('tokenInput').value = e.data.token;
-    document.getElementById('num2').classList.add('done');
-    document.getElementById('step3').scrollIntoView({ behavior: 'smooth' });
-    verifyToken();
+  if (e.data && e.data.type === 'ds-token' && e.data.token) {
+    showToken(e.data.token);
   }
 });
 
-function copyExtractScript() {
-  navigator.clipboard.writeText(extractCode).then(function() {
-    var btn = document.getElementById('copyScriptBtn');
+// Also poll the proxy for token
+function startPolling() {
+  pollTimer = setInterval(async function() {
+    pollCount++;
+    try {
+      var resp = await fetch('/proxy/__token__');
+      if (resp.ok) {
+        var data = await resp.json();
+        if (data.token) {
+          showToken(data.token);
+          stopPolling();
+        }
+      }
+    } catch(e) {}
+    // Stop after 5 minutes
+    if (pollCount > 300) stopPolling();
+  }, 2000);
+}
+
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+function showToken(token) {
+  stopPolling();
+  document.getElementById('tokenInput').value = token;
+  document.getElementById('resultBar').classList.add('show');
+  document.getElementById('resultLabel').className = 'label success';
+  document.getElementById('resultLabel').textContent = 'Token 获取成功！';
+  document.getElementById('statusText').textContent = '已获取';
+  document.getElementById('statusText').className = 'status found';
+  // Verify token
+  verifyAndShow(token);
+}
+
+async function verifyAndShow(token) {
+  try {
+    var resp = await fetch('https://chat.deepseek.com/api/v0/users/current', {
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': '*/*', 'User-Agent': 'Mozilla/5.0' }
+    });
+    if (resp.ok) {
+      var data = await resp.json();
+      var email = (data && data.data && data.data.biz_data && data.data.biz_data.user && data.data.biz_data.user.email) || '未知';
+      document.getElementById('emailText').textContent = '账号：' + email;
+      document.getElementById('resultLabel').className = 'label success';
+      document.getElementById('resultLabel').textContent = 'Token 有效！';
+    } else {
+      document.getElementById('resultLabel').className = 'label error';
+      document.getElementById('resultLabel').textContent = 'Token 可能无效 (HTTP ' + resp.status + ')';
+    }
+  } catch(e) {
+    document.getElementById('resultLabel').className = 'label error';
+    document.getElementById('resultLabel').textContent = '验证失败: ' + e.message;
+  }
+}
+
+function copyResult() {
+  var token = document.getElementById('tokenInput').value;
+  if (!token) return;
+  navigator.clipboard.writeText(token).then(function() {
+    var btn = document.getElementById('copyBtn');
     btn.textContent = '已复制';
     btn.classList.add('copied');
     setTimeout(function() { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
   }).catch(function() {
-    // Fallback: select the text manually
-    var code = document.getElementById('extractScript');
-    var range = document.createRange();
-    range.selectNodeContents(code);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    alert('请手动 Ctrl+C 复制选中的代码');
+    // Fallback for mobile
+    document.getElementById('tokenInput').select();
+    document.execCommand('copy');
+    var btn = document.getElementById('copyBtn');
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = '复制'; btn.classList.remove('copied'); }, 2000);
   });
 }
 
-function copyToken() {
-  var token = document.getElementById('tokenInput').value.trim();
-  if (!token) { alert('请先获取或粘贴 Token'); return; }
-  navigator.clipboard.writeText(token).then(function() {
-    var btn = event.target;
-    var orig = btn.textContent;
-    btn.textContent = '已复制';
-    btn.classList.add('copied');
-    setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
-  }).catch(function() { alert('复制失败，请手动选择复制'); });
+function toggleManual() {
+  document.getElementById('manualContent').classList.toggle('show');
 }
 
-async function verifyToken() {
-  var token = document.getElementById('tokenInput').value.trim();
-  var box = document.getElementById('verifyBox');
-  if (!token) { box.className = 'result-box error show'; box.innerHTML = '<div class="label error">请输入 Token</div>'; return; }
-  box.className = 'result-box show'; box.innerHTML = '<div class="label"><span class="status-dot waiting"></span>正在验证...</div>';
+async function verifyManual() {
+  var token = document.getElementById('manualToken').value.trim();
+  if (!token) return;
+  showToken(token);
+}
+
+async function pasteFromClipboard() {
   try {
-    var resp = await fetch('https://chat.deepseek.com/api/v0/users/current', { headers: { 'Authorization': 'Bearer ' + token, 'Accept': '*/*', 'User-Agent': 'Mozilla/5.0' } });
-    if (resp.ok) {
-      var data = await resp.json();
-      var email = (data && data.data && data.data.biz_data && data.data.biz_data.user && data.data.biz_data.user.email) || '未知';
-      document.getElementById('num3').classList.add('done');
-      box.className = 'result-box show';
-      box.innerHTML = '<div class="label success"><span class="status-dot success"></span>Token 有效！</div><div class="email">账号：' + email + '</div><div class="token">' + token + '</div><button class="copy-btn-sm" onclick="var t=this.previousElementSibling.textContent;navigator.clipboard.writeText(t);this.textContent=\\'已复制\\';this.classList.add(\\'copied\\');var s=this;setTimeout(function(){s.textContent=\\'复制 Token\\';s.classList.remove(\\'copied\\')},2000)">复制 Token</button>';
-    } else {
-      box.className = 'result-box error show';
-      box.innerHTML = '<div class="label error"><span class="status-dot error"></span>Token 无效</div><div class="token" style="color:#fca5a5">HTTP ' + resp.status + ' - 请确认 Token 正确且未过期</div>';
-    }
-  } catch (e) {
-    box.className = 'result-box error show';
-    box.innerHTML = '<div class="label error"><span class="status-dot error"></span>网络错误</div><div class="token" style="color:#fca5a5">' + e.message + '</div>';
+    var text = await navigator.clipboard.readText();
+    document.getElementById('manualToken').value = text;
+    verifyManual();
+  } catch(e) {
+    alert('无法读取剪贴板，请手动粘贴');
   }
 }
 
-// Check URL params for token (from bookmarklet fallback)
-(function() {
-  var params = new URLSearchParams(location.search);
-  var token = params.get('token');
-  if (token) {
-    document.getElementById('tokenInput').value = token;
-    verifyToken();
-    if (history.replaceState) history.replaceState(null, '', location.pathname);
-  }
-})();
+// Hide loading overlay when iframe loads
+document.getElementById('dsFrame').addEventListener('load', function() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.getElementById('statusText').textContent = '请在下方页面中登录';
+  // Start polling for token
+  startPolling();
+});
+
+// Also start polling immediately
+startPolling();
 </script>
 </body>
 </html>`;
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
+
+// ====== 反向代理 ======
+async function handleProxy(request) {
+  const url = new URL(request.url);
+  let targetPath = url.pathname.replace(/^\/proxy/, '') || '/';
+  // Keep query string
+  const targetUrl = 'https://chat.deepseek.com' + targetPath + (url.search || '');
+  
+  // Special endpoint for token polling
+  if (targetPath === '/__token__') {
+    const cookie = request.headers.get('Cookie') || '';
+    const match = cookie.match(/(?:^|;\s*)userToken=([^;]+)/);
+    const token = match ? match[1] : null;
+    return new Response(JSON.stringify({ token }), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+  
+  // Build proxy request
+  const proxyHeaders = new Headers();
+  const copyHeaders = ['accept', 'accept-language', 'content-type', 'cookie', 'referer', 'user-agent', 'x-client-locale', 'x-client-platform', 'x-client-version', 'x-app-version', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site'];
+  for (const h of copyHeaders) {
+    const val = request.headers.get(h);
+    if (val) proxyHeaders.set(h, val);
+  }
+  if (!proxyHeaders.has('user-agent')) proxyHeaders.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+  proxyHeaders.set('Origin', 'https://chat.deepseek.com');
+  proxyHeaders.set('Referer', 'https://chat.deepseek.com/');
+  
+  const proxyReq = new Request(targetUrl, {
+    method: request.method,
+    headers: proxyHeaders,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.arrayBuffer() : undefined,
+    redirect: 'manual',
+  });
+  
+  const resp = await fetch(proxyReq);
+  
+  // Handle redirects
+  if ([301, 302, 303, 307, 308].includes(resp.status)) {
+    const loc = resp.headers.get('Location') || '';
+    let newLoc = loc;
+    if (loc.startsWith('https://chat.deepseek.com')) {
+      newLoc = '/proxy' + loc.slice('https://chat.deepseek.com'.length);
+    } else if (loc.startsWith('/')) {
+      newLoc = '/proxy' + loc;
+    }
+    return new Response(null, {
+      status: 302,
+      headers: { 'Location': newLoc, 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+  
+  // Build response headers
+  const respHeaders = new Headers();
+  const copyRespHeaders = ['content-type', 'content-encoding', 'content-length', 'set-cookie', 'cache-control', 'etag', 'last-modified', 'x-frame-options', 'content-security-policy'];
+  for (const h of copyRespHeaders) {
+    const val = resp.headers.get(h);
+    if (val) {
+      if (h === 'set-cookie') {
+        // Set cookie on proxy domain
+        let cookie = val;
+        // Remove domain restriction
+        cookie = cookie.replace(/;\s*domain=[^;]+/gi, '');
+        cookie = cookie.replace(/;\s*secure/gi, '');
+        respHeaders.append('Set-Cookie', cookie);
+      } else if (h === 'x-frame-options' || h === 'content-security-policy') {
+        // Don't forward frame-blocking headers
+      } else {
+        respHeaders.set(h, val);
+      }
+    }
+  }
+  respHeaders.set('Access-Control-Allow-Origin', '*');
+  respHeaders.set('Access-Control-Allow-Credentials', 'true');
+  
+  // Modify HTML content
+  const contentType = resp.headers.get('Content-Type') || '';
+  let body = await resp.arrayBuffer();
+  
+  if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
+    let html = new TextDecoder().decode(body);
+    
+    // Replace absolute URLs pointing to deepseek
+    html = html.replace(/https:\/\/chat\.deepseek\.com/g, '/proxy');
+    html = html.replace(/"\/_next\//g, '"/proxy/_next/');
+    html = html.replace(/"\/api\//g, '"/proxy/api/');
+    html = html.replace(/"\/v0\//g, '"/proxy/v0/');
+    html = html.replace(/"\/auth\//g, '"/proxy/auth/');
+    html = html.replace(/"\/login/g, '"/proxy/login');
+    html = html.replace(/"\/signup/g, '"/proxy/signup');
+    html = html.replace(/'\/_next\//g, "'/proxy/_next/");
+    html = html.replace(/'\/api\//g, "'/proxy/api/");
+    html = html.replace(/'\/v0\//g, "'/proxy/v0/");
+    html = html.replace(/'\/auth\//g, "'/proxy/auth/");
+    // Fix relative paths in src/href that start with /
+    html = html.replace(/(src|href)="\/(?![\/])/g, '$1="/proxy/');
+    html = html.replace(/(src|href)='\/(?![\/])/g, "$1='/proxy/");
+    
+    // Inject token extraction script before </body>
+    const injectScript = '<script>setInterval(function(){try{var t=localStorage.getItem("userToken");if(t&&t!==window.__sentToken){window.__sentToken=t;window.parent.postMessage({type:"ds-token",token:t},"*")}}catch(e){}},1500);</script>';
+    html = html.replace('</body>', injectScript + '</body>');
+    if (!html.includes('</body>')) html += injectScript;
+    
+    body = new TextEncoder().encode(html);
+    respHeaders.set('Content-Length', String(body.length));
+  }
+  
+  return new Response(body, { status: resp.status, headers: respHeaders });
 }
 
 // ====== 主入口 ======
@@ -597,9 +714,9 @@ export default {
     try {
       if (path === '/health') return jsonResponse({ status: 'ok', timestamp: Date.now() });
       if (path === '/v1/models') return jsonResponse({ object: 'list', data: MODELS });
-      if (path === '/api/login') return handleLogin(request);
       if (path === '/get-token.html') return serveTokenPage();
       if (path === '/') return serveHomePage();
+      if (path.startsWith('/proxy/')) return handleProxy(request);
 
       if (path === '/v1/chat/completions') {
         if (request.method !== 'POST') return jsonResponse({ error: { message: 'Method not allowed', type: 'invalid_request_error' } }, 405);
