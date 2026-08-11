@@ -27,17 +27,19 @@ const ROT_STEPS = (() => {
 })();
 
 // 64-bit ROTL on [hi, lo] pair, returns [hi, lo]
+// value = hi*2^32 + lo, rotated left by n bits
 function ROTL64(hi, lo, n) {
   if (n === 0) return [hi, lo];
   if (n < 32) {
-    const mask = (1 << n) - 1;
-    const carry = lo >>> (32 - n);
-    return [((hi << n) | carry) >>> 0, ((lo << n) | (hi & mask)) >>> 0];
+    const carry = lo >>> (32 - n);     // low bits that go into hi
+    const wrap = hi >>> (32 - n);      // high bits that wrap around to bottom
+    return [((hi << n) | carry) >>> 0, ((lo << n) | wrap) >>> 0];
   }
   n -= 32;
-  const mask = (1 << n) - 1;
+  if (n === 0) return [lo, hi];       // just swap halves
   const carry = hi >>> (32 - n);
-  return [((lo << n) | carry) >>> 0, ((hi << n) | (lo & mask)) >>> 0];
+  const wrap = lo >>> (32 - n);
+  return [((lo << n) | carry) >>> 0, ((hi << n) | wrap) >>> 0];
 }
 
 function keccakF_ds(state) {
@@ -102,11 +104,12 @@ function keccakF_ds(state) {
   }
 }
 
-function absorb(state, bytes, offset, length) {
+function absorb(state, bytes, offset, length, blockStart) {
+  blockStart = blockStart || 0;
   for (let j = 0; j < length; j++) {
     const byteVal = bytes[offset + j];
-    // Little-endian: byte j in the block goes to word position
-    const wi = (j >> 3) * 2, bi = j & 7;
+    const pos = blockStart + j;
+    const wi = (pos >> 3) * 2, bi = pos & 7;
     if (bi < 4) {
       state[wi+1] ^= byteVal << (bi * 8);
     } else {
@@ -246,10 +249,10 @@ function solvePow(challenge) {
     // Absorb remaining prefix
     absorb(state, prefixBytes, pos, rem);
     
-    // Absorb nonce digits
+    // Absorb nonce digits at the correct block position (after prefix)
     const nonceStr = String(nonce);
     const nonceBytes = encoder.encode(nonceStr);
-    absorb(state, nonceBytes, 0, nonceBytes.length);
+    absorb(state, nonceBytes, 0, nonceBytes.length, rem);
     
     // SHA3 padding on the remaining space in the block
     let p = rem + nonceBytes.length;
