@@ -1,5 +1,5 @@
-// ====== SHA3-512 (Keccak) 内联实现 ======
-const RC = [
+// ====== DeepSeekHashV1 = SHA3-256 变体: 23 rounds (skip round 0), SHA3 padding ======
+const DS_RC = [
   0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n,
   0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n,
   0x000000000000008an, 0x0000000000000088n, 0x0000000080008009n, 0x000000008000000an,
@@ -7,61 +7,65 @@ const RC = [
   0x8000000000008002n, 0x8000000000000080n, 0x000000000000800an, 0x800000008000000an,
   0x8000000080008081n, 0x8000000000008080n, 0x0000000080000001n, 0x8000000080008008n
 ];
-const RHOS = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14];
-const ROTL = (v, n) => ((v << n) | (v >> (64n - n))) & 0xFFFFFFFFFFFFFFFFn;
+const DS_RHOS = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14];
+const DS_ROTL = (v, n) => ((v << n) | (v >> (64n - n))) & 0xFFFFFFFFFFFFFFFFn;
 
-function keccakF(state) {
-  for (let r = 0; r < 24; r++) {
+// DeepSeekHashV1: Keccak-f[1600] rounds 1..23 (skip round 0, use RC[1]..RC[23])
+function keccakF_ds(state) {
+  for (let r = 1; r < 24; r++) {
     const C = [0, 1, 2, 3, 4].map(x => state[x] ^ state[x+5] ^ state[x+10] ^ state[x+15] ^ state[x+20]);
-    const D = [0, 1, 2, 3, 4].map(x => C[(x+4)%5] ^ ROTL(C[(x+1)%5], 1n));
+    const D = [0, 1, 2, 3, 4].map(x => C[(x+4)%5] ^ DS_ROTL(C[(x+1)%5], 1n));
     for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) state[x+5*y] ^= D[x];
     let cur = state[1], cx = 1, cy = 0;
     for (let t = 0; t < 24; t++) {
       const nx = cy, ny = (2*cx + 3*cy) % 5;
       const tmp = state[nx + 5*ny];
-      state[nx + 5*ny] = ROTL(cur, BigInt(RHOS[cx + 5*cy]));
+      state[nx + 5*ny] = DS_ROTL(cur, BigInt(DS_RHOS[cx + 5*cy]));
       cur = tmp; cx = nx; cy = ny;
     }
     for (let y = 0; y < 5; y++) {
       const T = [0, 1, 2, 3, 4].map(x => state[x+5*y]);
       for (let x = 0; x < 5; x++) state[x+5*y] = T[x] ^ ((~T[(x+1)%5]) & T[(x+2)%5]);
     }
-    state[0] ^= RC[r];
+    state[0] ^= DS_RC[r];
   }
 }
 
-function sha3_512(msg) {
-  const rate = 72, outLen = 64;
+// SHA3-256 padding (0x06), rate=136, output=32 bytes
+function deepseekHashV1(bytes) {
+  const rate = 136, outLen = 32;
   const state = new Array(25).fill(0n);
   let i = 0;
-  while (i + rate <= msg.length) {
+  while (i + rate <= bytes.length) {
     for (let j = 0; j < rate; j++) {
-      const wi = (j / 8) | 0, bi = j % 8;
-      state[wi] ^= BigInt(msg[i + j]) << BigInt(8 * bi);
+      const wi = (j >> 3), bi = j & 7;
+      state[wi] ^= BigInt(bytes[i + j]) << BigInt(bi << 3);
     }
-    keccakF(state);
+    keccakF_ds(state);
     i += rate;
   }
-  const rem = msg.length - i;
+  const rem = bytes.length - i;
   for (let j = 0; j < rem; j++) {
-    const wi = (j / 8) | 0, bi = j % 8;
-    state[wi] ^= BigInt(msg[i + j]) << BigInt(8 * bi);
+    const wi = (j >> 3), bi = j & 7;
+    state[wi] ^= BigInt(bytes[i + j]) << BigInt(bi << 3);
   }
-  const wi = (rem / 8) | 0, bi = rem % 8;
-  state[wi] ^= 0x06n << BigInt(8 * bi);
-  state[(rate - 1) / 8 | 0] ^= 0x80n << BigInt(8 * ((rate - 1) % 8));
-  keccakF(state);
+  // SHA3 padding: 0x06 + 0x00... + 0x80
+  state[(rem >> 3)] ^= 0x06n << BigInt((rem & 7) << 3);
+  state[(rate - 1) >> 3] ^= 0x80n << BigInt(((rate - 1) & 7) << 3);
+  keccakF_ds(state);
   const out = new Uint8Array(outLen);
-  let o = 0;
-  while (o < outLen) {
-    const bs = Math.min(rate, outLen - o);
-    for (let j = 0; j < bs; j++) {
-      out[o + j] = Number((state[(j / 8) | 0] >> BigInt(8 * (j % 8))) & 0xFFn);
-    }
-    o += bs;
-    if (o < outLen) keccakF(state);
+  for (let j = 0; j < outLen; j++) {
+    out[j] = Number((state[(j >> 3)] >> BigInt((j & 7) << 3)) & 0xFFn);
   }
   return out;
+}
+
+function bytesToHex(bytes) {
+  let hex = '';
+  for (let i = 0; i < bytes.length; i++) {
+    hex += (bytes[i] >> 4).toString(16) + (bytes[i] & 0xF).toString(16);
+  }
+  return hex;
 }
 
 // ====== 常量 ======
@@ -146,30 +150,29 @@ function shouldEnableThinking(model, thinking, reasoningEffort) {
   return lower.includes('pro') || lower.includes('reasoner') || lower.includes('r1');
 }
 
-// ====== POW 求解器 ======
-function countLeadingZeroBits(hashBytes) {
-  let count = 0;
-  for (let i = 0; i < hashBytes.length; i++) {
-    if (hashBytes[i] === 0) { count += 8; continue; }
-    let b = hashBytes[i];
-    while ((b & 0x80) === 0) { count++; b <<= 1; }
-    break;
-  }
-  return count;
-}
-
+// ====== POW 求解器 (DeepSeekHashV1) ======
+// Algorithm: Keccak-256 with 23 rounds, original padding
+// Input: salt_expire_at_nonce
+// Goal: find nonce where keccak256(salt_expire_at_nonce) == challenge hex
 function solvePow(challenge) {
-  const { algorithm, challenge: challengeStr, salt, difficulty, expire_at, signature } = challenge;
+  const { algorithm, challenge: challengeHex, salt, difficulty, expire_at, signature } = challenge;
   const prefix = salt + '_' + expire_at + '_';
   const encoder = new TextEncoder();
-  for (let nonce = 0; nonce < 500000; nonce++) {
-    const input = prefix + challengeStr + nonce;
-    const hashBytes = sha3_512(encoder.encode(input));
-    if (countLeadingZeroBits(hashBytes) >= difficulty) {
-      return { algorithm, challenge: challengeStr, salt, answer: nonce, signature, target_path: '/api/v0/chat/completion' };
+  const prefixBytes = encoder.encode(prefix);
+  const targetHex = challengeHex.toLowerCase();
+  
+  for (let nonce = 0; nonce <= difficulty; nonce++) {
+    const nonceStr = String(nonce);
+    const nonceBytes = encoder.encode(nonceStr);
+    const fullBytes = new Uint8Array(prefixBytes.length + nonceBytes.length);
+    fullBytes.set(prefixBytes, 0);
+    fullBytes.set(nonceBytes, prefixBytes.length);
+    const hash = deepseekHashV1(fullBytes);
+    if (bytesToHex(hash) === targetHex) {
+      return { algorithm, challenge: challengeHex, salt, answer: nonce, signature, target_path: '/api/v0/chat/completion' };
     }
   }
-  throw new Error('POW failed: exceeded max iterations');
+  throw new Error('POW failed: exceeded difficulty ' + difficulty);
 }
 
 function encodePowAnswer(answer) {
