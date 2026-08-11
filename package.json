@@ -1,0 +1,19 @@
+{
+  "name": "deepseek-cf-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker 代理 DeepSeek Web Chat API，通过账号密码实现无限使用",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.7.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260804.1",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.14.0"
+  }
+}

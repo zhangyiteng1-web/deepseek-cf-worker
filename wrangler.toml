@@ -1,0 +1,17 @@
+# ============================================================
+# DeepSeek Cloudflare Worker - 配置文件
+# ============================================================
+name = "deepseek-cf-worker"
+main = "src/index.ts"
+compatibility_date = "2025-08-01"
+
+# 绑定自定义域名后，通过 https://your-domain.com/v1 访问
+# 在 Cloudflare Dashboard > Workers > Triggers 中添加自定义域名
+
+[observability]
+enabled = true
+
+# 如需持久化存储 token（可选，需要 KV 命名空间）
+# [[kv_namespaces]]
+# binding = "DEEPSEEK_KV"
+# id = "your-kv-namespace-id"
