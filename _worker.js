@@ -1,71 +1,142 @@
 // ====== DeepSeekHashV1 = SHA3-256 变体: 23 rounds (skip round 0), SHA3 padding ======
-const DS_RC = [
-  0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n,
-  0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n,
-  0x000000000000008an, 0x0000000000000088n, 0x0000000080008009n, 0x000000008000000an,
-  0x000000008000808bn, 0x800000000000008bn, 0x8000000000008089n, 0x8000000000008003n,
-  0x8000000000008002n, 0x8000000000000080n, 0x000000000000800an, 0x800000008000000an,
-  0x8000000080008081n, 0x8000000000008080n, 0x0000000080000001n, 0x8000000080008008n
-];
-const DS_RHOS = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14];
-const DS_ROTL = (v, n) => ((v << n) | (v >> (64n - n))) & 0xFFFFFFFFFFFFFFFFn;
+// Optimized: Uint32Array instead of BigInt for maximum V8 JIT speed
+// 25 lanes × 2 words (hi/lo) = 50 uint32 values
 
-// DeepSeekHashV1: Keccak-f[1600] rounds 1..23 (skip round 0, use RC[1]..RC[23])
+// RC constants as [hi, lo] pairs for rounds 1..23
+const RC_WORDS = new Uint32Array([
+  0x00000000,0x00000001, 0x00000000,0x00008082, 0x80000000,0x0000808a, 0x80000000,0x80008000,
+  0x00000000,0x0000808b, 0x00000000,0x80000001, 0x80000000,0x80008081, 0x80000000,0x00008009,
+  0x00000000,0x0000008a, 0x00000000,0x00000088, 0x00000000,0x80008009, 0x00000000,0x8000000a,
+  0x00000000,0x8000808b, 0x80000000,0x0000008b, 0x80000000,0x00008089, 0x80000000,0x00008003,
+  0x80000000,0x00008002, 0x80000000,0x00000080, 0x00000000,0x0000800a, 0x80000000,0x8000000a,
+  0x80000000,0x80008081, 0x80000000,0x00008080, 0x00000000,0x80000001, 0x80000000,0x80008008
+]);
+
+const RH = [0,1,62,28,27,36,44,6,55,20,3,10,43,25,39,41,45,15,21,8,18,2,61,56,14];
+const PIL = [10,7,11,17,18,3,5,16,8,21,24,4,15,23,19,13,12,2,20,14,22,9,6,1];
+// Rotations for each step of the walking pattern (source lane's rotation)
+const ROT_STEPS = (() => {
+  const r = new Uint8Array(24);
+  let x = 1, y = 0;
+  for (let t = 0; t < 24; t++) {
+    r[t] = RH[x + 5*y];
+    const ny = (2*x + 3*y) % 5;
+    x = y; y = ny;
+  }
+  return r;
+})();
+
+// 64-bit ROTL on [hi, lo] pair, returns [hi, lo]
+function ROTL64(hi, lo, n) {
+  if (n === 0) return [hi, lo];
+  if (n < 32) {
+    const mask = (1 << n) - 1;
+    const carry = lo >>> (32 - n);
+    return [((hi << n) | carry) >>> 0, ((lo << n) | (hi & mask)) >>> 0];
+  }
+  n -= 32;
+  const mask = (1 << n) - 1;
+  const carry = hi >>> (32 - n);
+  return [((lo << n) | carry) >>> 0, ((hi << n) | (lo & mask)) >>> 0];
+}
+
 function keccakF_ds(state) {
+  // state is Uint32Array of 50 values (25 lanes × 2 words)
   for (let r = 1; r < 24; r++) {
-    const C = [0, 1, 2, 3, 4].map(x => state[x] ^ state[x+5] ^ state[x+10] ^ state[x+15] ^ state[x+20]);
-    const D = [0, 1, 2, 3, 4].map(x => C[(x+4)%5] ^ DS_ROTL(C[(x+1)%5], 1n));
-    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) state[x+5*y] ^= D[x];
-    let cur = state[1], cx = 1, cy = 0;
+    // Theta
+    const C = new Uint32Array(10); // 5 pairs
+    for (let x = 0; x < 5; x++) {
+      let chi = 0, clo = 0;
+      for (let y = 0; y < 5; y++) {
+        const i = (x + 5*y) * 2;
+        chi ^= state[i]; clo ^= state[i+1];
+      }
+      C[x*2] = chi; C[x*2+1] = clo;
+    }
+    // D[x] = C[x-1] ^ ROTL(C[x+1], 1)
+    const D = new Uint32Array(10);
+    for (let x = 0; x < 5; x++) {
+      const c0 = C[((x+4)%5)*2], c1 = C[((x+4)%5)*2+1];
+      const c2 = C[((x+1)%5)*2], c3 = C[((x+1)%5)*2+1];
+      const [rh, rl] = ROTL64(c2, c3, 1);
+      D[x*2] = c0 ^ rh; D[x*2+1] = c1 ^ rl;
+    }
+    for (let x = 0; x < 5; x++) {
+      const dh = D[x*2], dl = D[x*2+1];
+      for (let y = 0; y < 5; y++) {
+        const i = (x + 5*y) * 2;
+        state[i] ^= dh; state[i+1] ^= dl;
+      }
+    }
+
+    // Rho + Pi
+    const tmp = new Uint32Array(2);
+    tmp[0] = state[2]; tmp[1] = state[3]; // lane 1
+    let curHi = state[2], curLo = state[3];
+    
     for (let t = 0; t < 24; t++) {
-      const nx = cy, ny = (2*cx + 3*cy) % 5;
-      const tmp = state[nx + 5*ny];
-      state[nx + 5*ny] = DS_ROTL(cur, BigInt(DS_RHOS[cx + 5*cy]));
-      cur = tmp; cx = nx; cy = ny;
+      const nx = PIL[t];
+      const targetIdx = nx * 2;
+      const rot = ROT_STEPS[t];
+      const [rh, rl] = ROTL64(curHi, curLo, rot);
+      const oldHi = state[targetIdx], oldLo = state[targetIdx+1];
+      state[targetIdx] = rh; state[targetIdx+1] = rl;
+      curHi = oldHi; curLo = oldLo;
     }
+
+    // Chi
+    const B = new Uint32Array(50);
     for (let y = 0; y < 5; y++) {
-      const T = [0, 1, 2, 3, 4].map(x => state[x+5*y]);
-      for (let x = 0; x < 5; x++) state[x+5*y] = T[x] ^ ((~T[(x+1)%5]) & T[(x+2)%5]);
+      for (let x = 0; x < 5; x++) {
+        const i = (x + 5*y) * 2;
+        const nx = ((x+1)%5 + 5*y) * 2, n2x = ((x+2)%5 + 5*y) * 2;
+        B[i] = state[i] ^ ((~state[nx]) & state[n2x]);
+        B[i+1] = state[i+1] ^ ((~state[nx+1]) & state[n2x+1]);
+      }
     }
-    state[0] ^= DS_RC[r];
+    state.set(B);
+
+    // Iota
+    const rcHi = RC_WORDS[r*2], rcLo = RC_WORDS[r*2+1];
+    state[0] ^= rcHi; state[1] ^= rcLo;
   }
 }
 
-// SHA3-256 padding (0x06), rate=136, output=32 bytes
-function deepseekHashV1(bytes) {
-  const rate = 136, outLen = 32;
-  const state = new Array(25).fill(0n);
-  let i = 0;
-  while (i + rate <= bytes.length) {
-    for (let j = 0; j < rate; j++) {
-      const wi = (j >> 3), bi = j & 7;
-      state[wi] ^= BigInt(bytes[i + j]) << BigInt(bi << 3);
+function absorb(state, bytes, offset, length) {
+  for (let j = 0; j < length; j++) {
+    const byteVal = bytes[offset + j];
+    // Little-endian: byte j in the block goes to word position
+    const wi = (j >> 3) * 2, bi = j & 7;
+    if (bi < 4) {
+      state[wi+1] ^= byteVal << (bi * 8);
+    } else {
+      state[wi] ^= byteVal << ((bi - 4) * 8);
     }
-    keccakF_ds(state);
-    i += rate;
   }
-  const rem = bytes.length - i;
-  for (let j = 0; j < rem; j++) {
-    const wi = (j >> 3), bi = j & 7;
-    state[wi] ^= BigInt(bytes[i + j]) << BigInt(bi << 3);
-  }
-  // SHA3 padding: 0x06 + 0x00... + 0x80
-  state[(rem >> 3)] ^= 0x06n << BigInt((rem & 7) << 3);
-  state[(rate - 1) >> 3] ^= 0x80n << BigInt(((rate - 1) & 7) << 3);
-  keccakF_ds(state);
-  const out = new Uint8Array(outLen);
-  for (let j = 0; j < outLen; j++) {
-    out[j] = Number((state[(j >> 3)] >> BigInt((j & 7) << 3)) & 0xFFn);
-  }
-  return out;
 }
 
 function bytesToHex(bytes) {
   let hex = '';
   for (let i = 0; i < bytes.length; i++) {
-    hex += (bytes[i] >> 4).toString(16) + (bytes[i] & 0xF).toString(16);
+    const b = bytes[i];
+    hex += ((b >> 4) < 10 ? String.fromCharCode(48 + (b >> 4)) : String.fromCharCode(87 + (b >> 4))) +
+           ((b & 15) < 10 ? String.fromCharCode(48 + (b & 15)) : String.fromCharCode(87 + (b & 15)));
   }
   return hex;
+}
+
+// Extract 32 bytes from state (little-endian)
+function squeeze256(state) {
+  const out = new Uint8Array(32);
+  for (let j = 0; j < 32; j++) {
+    const wi = (j >> 3) * 2, bi = j & 7;
+    if (bi < 4) {
+      out[j] = (state[wi+1] >>> (bi * 8)) & 0xFF;
+    } else {
+      out[j] = (state[wi] >>> ((bi - 4) * 8)) & 0xFF;
+    }
+  }
+  return out;
 }
 
 // ====== 常量 ======
@@ -150,64 +221,52 @@ function shouldEnableThinking(model, thinking, reasoningEffort) {
   return lower.includes('pro') || lower.includes('reasoner') || lower.includes('r1');
 }
 
-// ====== POW 求解器 (DeepSeekHashV1) ======
-// Input: salt_expire_at_nonce, find nonce where hash == challenge hex
-// Optimization: pre-compute partial hash for the constant prefix
+// ====== POW 求解器 (DeepSeekHashV1) Uint32 version ======
 function solvePow(challenge) {
   const { algorithm, challenge: challengeHex, salt, difficulty, expire_at, signature } = challenge;
   const prefix = salt + '_' + expire_at + '_';
   const encoder = new TextEncoder();
   const prefixBytes = encoder.encode(prefix);
   const targetHex = challengeHex.toLowerCase();
-  
-  // Pre-compute state after absorbing all full blocks of prefix
   const rate = 136;
-  const baseState = new Array(25).fill(0n);
+  
+  // Pre-compute state after absorbing full 136-byte blocks of prefix
+  const baseState = new Uint32Array(50);
   let pos = 0;
   while (pos + rate <= prefixBytes.length) {
-    for (let j = 0; j < rate; j++) {
-      const wi = (j >> 3), bi = j & 7;
-      baseState[wi] ^= BigInt(prefixBytes[pos + j]) << BigInt(bi << 3);
-    }
+    absorb(baseState, prefixBytes, pos, rate);
     keccakF_ds(baseState);
     pos += rate;
   }
   const rem = prefixBytes.length - pos;
   
   for (let nonce = 0; nonce <= difficulty; nonce++) {
-    // Clone base state
-    const state = baseState.slice();
+    const state = new Uint32Array(baseState);
     
-    // Absorb remaining prefix + nonce + padding
-    let p = 0;
-    // Remaining prefix bytes
-    for (let j = 0; j < rem; j++) {
-      const wi = ((pos + p) >> 3), bi = (pos + p) & 7;
-      state[wi] ^= BigInt(prefixBytes[pos + j]) << BigInt(bi << 3);
-      p++;
-    }
-    // Nonce digits as ASCII
+    // Absorb remaining prefix
+    absorb(state, prefixBytes, pos, rem);
+    
+    // Absorb nonce digits
     const nonceStr = String(nonce);
     const nonceBytes = encoder.encode(nonceStr);
-    for (let j = 0; j < nonceBytes.length; j++) {
-      const wi = ((pos + p) >> 3), bi = (pos + p) & 7;
-      state[wi] ^= BigInt(nonceBytes[j]) << BigInt(bi << 3);
-      p++;
+    absorb(state, nonceBytes, 0, nonceBytes.length);
+    
+    // SHA3 padding on the remaining space in the block
+    let p = rem + nonceBytes.length;
+    const padHi = (p >> 3) * 2, padLo = padHi + 1, padBi = p & 7;
+    if (padBi < 4) {
+      state[padLo] ^= 0x06 << (padBi * 8);
+    } else {
+      state[padHi] ^= 0x06 << ((padBi - 4) * 8);
     }
-    // SHA3 padding
-    const padPos = pos + p;
-    const padWi = (padPos >> 3), padBi = padPos & 7;
-    state[padWi] ^= 0x06n << BigInt(padBi << 3);
-    // Final padding byte at end of rate
-    state[(rate - 1) >> 3] ^= 0x80n << BigInt(((rate - 1) & 7) << 3);
+    // Final 0x80 padding at end of rate block (byte 135)
+     const fWi = (135 >> 3) * 2, fBi = 135 & 7;
+     if (fBi < 4) state[fWi+1] ^= 0x80 << (fBi * 8);
+     else state[fWi] ^= 0x80 << ((fBi - 4) * 8);
     
     keccakF_ds(state);
     
-    // Extract hash bytes
-    const hash = new Uint8Array(32);
-    for (let j = 0; j < 32; j++) {
-      hash[j] = Number((state[(j >> 3)] >> BigInt((j & 7) << 3)) & 0xFFn);
-    }
+    const hash = squeeze256(state);
     if (bytesToHex(hash) === targetHex) {
       return { algorithm, challenge: challengeHex, salt, answer: nonce, signature, target_path: '/api/v0/chat/completion' };
     }
