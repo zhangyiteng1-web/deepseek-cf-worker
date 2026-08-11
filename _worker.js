@@ -151,9 +151,8 @@ function shouldEnableThinking(model, thinking, reasoningEffort) {
 }
 
 // ====== POW 求解器 (DeepSeekHashV1) ======
-// Algorithm: Keccak-256 with 23 rounds, original padding
-// Input: salt_expire_at_nonce
-// Goal: find nonce where keccak256(salt_expire_at_nonce) == challenge hex
+// Input: salt_expire_at_nonce, find nonce where hash == challenge hex
+// Optimization: pre-compute partial hash for the constant prefix
 function solvePow(challenge) {
   const { algorithm, challenge: challengeHex, salt, difficulty, expire_at, signature } = challenge;
   const prefix = salt + '_' + expire_at + '_';
@@ -161,13 +160,54 @@ function solvePow(challenge) {
   const prefixBytes = encoder.encode(prefix);
   const targetHex = challengeHex.toLowerCase();
   
+  // Pre-compute state after absorbing all full blocks of prefix
+  const rate = 136;
+  const baseState = new Array(25).fill(0n);
+  let pos = 0;
+  while (pos + rate <= prefixBytes.length) {
+    for (let j = 0; j < rate; j++) {
+      const wi = (j >> 3), bi = j & 7;
+      baseState[wi] ^= BigInt(prefixBytes[pos + j]) << BigInt(bi << 3);
+    }
+    keccakF_ds(baseState);
+    pos += rate;
+  }
+  const rem = prefixBytes.length - pos;
+  
   for (let nonce = 0; nonce <= difficulty; nonce++) {
+    // Clone base state
+    const state = baseState.slice();
+    
+    // Absorb remaining prefix + nonce + padding
+    let p = 0;
+    // Remaining prefix bytes
+    for (let j = 0; j < rem; j++) {
+      const wi = ((pos + p) >> 3), bi = (pos + p) & 7;
+      state[wi] ^= BigInt(prefixBytes[pos + j]) << BigInt(bi << 3);
+      p++;
+    }
+    // Nonce digits as ASCII
     const nonceStr = String(nonce);
     const nonceBytes = encoder.encode(nonceStr);
-    const fullBytes = new Uint8Array(prefixBytes.length + nonceBytes.length);
-    fullBytes.set(prefixBytes, 0);
-    fullBytes.set(nonceBytes, prefixBytes.length);
-    const hash = deepseekHashV1(fullBytes);
+    for (let j = 0; j < nonceBytes.length; j++) {
+      const wi = ((pos + p) >> 3), bi = (pos + p) & 7;
+      state[wi] ^= BigInt(nonceBytes[j]) << BigInt(bi << 3);
+      p++;
+    }
+    // SHA3 padding
+    const padPos = pos + p;
+    const padWi = (padPos >> 3), padBi = padPos & 7;
+    state[padWi] ^= 0x06n << BigInt(padBi << 3);
+    // Final padding byte at end of rate
+    state[(rate - 1) >> 3] ^= 0x80n << BigInt(((rate - 1) & 7) << 3);
+    
+    keccakF_ds(state);
+    
+    // Extract hash bytes
+    const hash = new Uint8Array(32);
+    for (let j = 0; j < 32; j++) {
+      hash[j] = Number((state[(j >> 3)] >> BigInt((j & 7) << 3)) & 0xFFn);
+    }
     if (bytesToHex(hash) === targetHex) {
       return { algorithm, challenge: challengeHex, salt, answer: nonce, signature, target_path: '/api/v0/chat/completion' };
     }
