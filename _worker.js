@@ -379,9 +379,10 @@ async function handleChatCompletion(body, env) {
 
   const text = await resp.text();
   const contents = [];
-  for (const line of text.split('\n')) {
+  const lines = text.replace(/\r/g, '').split('\n');
+  for (const line of lines) {
     if (line.startsWith('data: ')) {
-      try { const d = JSON.parse(line.slice(6)); if (d.type === 'text' && d.content) contents.push(d.content); } catch (e) {}
+      try { const d = JSON.parse(line.slice(6)); if (d.content) contents.push(d.content); } catch (e) {}
     }
   }
   return jsonResponse({
@@ -433,16 +434,15 @@ async function handleStreamCompletion(body, env) {
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
+          const lines = buffer.replace(/\r/g, '').split('\n');
           buffer = lines.pop() || '';
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue;
             try {
               const d = JSON.parse(line.slice(6));
-              if (d.content && (d.type === 'text' || d.type === 'thinking')) {
+              if (d.content) {
                 const delta = {};
-                if (d.type === 'text') delta.content = d.content;
-                else delta.reasoning_content = d.content;
+                delta.content = d.content;
                 const chunk = { id: chatId, object: 'chat.completion.chunk', created: now(), model, choices: [{ index: 0, delta, finish_reason: null }] };
                 controller.enqueue(encoder.encode('data: ' + JSON.stringify(chunk) + '\n\n'));
               }
