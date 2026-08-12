@@ -833,14 +833,13 @@ export default {
     try {
       if (path === '/health') return jsonResponse({ status: 'ok', timestamp: Date.now() });
       if (path === '/v1/pow-challenge') {
-        try {
-          const session = await getOrCreateSession(env);
-          const challenge = await getPowChallenge(env);
-          return jsonResponse({ session_id: session.sessionId, ...challenge });
-        } catch (e) {
-          return jsonResponse({ error: e.message }, 500);
-        }
-      }
+         try {
+           const challenge = await getPowChallenge(env);
+           return jsonResponse(challenge);
+         } catch (e) {
+           return jsonResponse({ error: e.message }, 500);
+         }
+       }
       if (path === '/v1/models') return jsonResponse({ object: 'list', data: MODELS });
       if (path === '/get-token.html') return serveTokenPage();
       if (path === '/') return serveHomePage();
