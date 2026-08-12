@@ -478,40 +478,42 @@ function serveHomePage() {
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>DeepSeek Cloudflare Worker API</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}.container{max-width:720px;width:100%;background:#1e293b;border-radius:16px;padding:40px;box-shadow:0 25px 50px rgba(0,0,0,.3)}h1{font-size:28px;margin-bottom:8px;color:#38bdf8}.subtitle{color:#94a3b8;margin-bottom:32px;font-size:14px}.section{margin-bottom:28px}.section h2{font-size:18px;color:#f1f5f9;margin-bottom:12px;border-bottom:1px solid #334155;padding-bottom:8px}.endpoint{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:16px;margin-bottom:12px}.method{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;margin-right:8px}.post{background:#166534;color:#4ade80}.get{background:#1e3a5f;color:#60a5fa}.path{font-family:Menlo,Consolas,monospace;color:#e2e8f0;font-size:14px}.desc{color:#94a3b8;font-size:13px;margin-top:6px}pre{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:16px;overflow-x:auto;font-size:13px;line-height:1.6;color:#e2e8f0}.comment{color:#64748b}.key{color:#93c5fd}.str{color:#86efac}.models{display:flex;flex-wrap:wrap;gap:8px}.model-tag{background:#334155;color:#e2e8f0;padding:4px 12px;border-radius:20px;font-size:13px}.status{display:flex;align-items:center;gap:8px;margin-top:24px;color:#4ade80;font-size:14px}.dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}@keyframes pulse{0%,to{opacity:1}50%{opacity:.4}}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;padding:20px}.container{max-width:800px;margin:0 auto}.card{background:#1e293b;border-radius:12px;padding:24px;margin-bottom:16px}h1{font-size:22px;color:#38bdf8;margin-bottom:4px}.subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}h2{font-size:16px;color:#f1f5f9;margin-bottom:10px;border-bottom:1px solid #334155;padding-bottom:6px}.endpoint{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:10px}.method{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;min-width:40px;text-align:center}.post{background:#166534;color:#4ade80}.get{background:#1e3a5f;color:#60a5fa}.path{font-family:Menlo,Consolas,monospace;color:#e2e8f0;font-size:13px;flex:1}.desc{color:#94a3b8;font-size:12px;flex:2;text-align:right}pre{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;overflow-x:auto;font-size:12px;line-height:1.5;color:#e2e8f0}.comment{color:#64748b}.key{color:#93c5fd}.str{color:#86efac}.models{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.model-tag{background:#334155;color:#e2e8f0;padding:4px 10px;border-radius:16px;font-size:12px}.status{display:flex;align-items:center;gap:6px;color:#4ade80;font-size:13px}.dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite}@keyframes pulse{0%,to{opacity:1}50%{opacity:.4}}.warn{background:#451a03;border:1px solid #92400e;border-radius:8px;padding:12px 16px;margin-top:12px;font-size:12px;color:#fbbf24;line-height:1.6}.warn b{color:#fcd34d}.copy-btn{background:#334155;color:#e2e8f0;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:8px}.copy-btn.copied{background:#166534;color:#4ade80}
 </style>
 </head>
 <body>
 <div class="container">
+<div class="card">
 <h1>DeepSeek Cloudflare Worker</h1>
-<p class="subtitle">OpenAI 兼容的 DeepSeek Web Chat API 代理</p>
-<div class="section">
-<h2>接口列表</h2>
-<div class="endpoint"><span class="method post">POST</span><span class="path">/v1/chat/completions</span><p class="desc">OpenAI 兼容的聊天完成，支持流式和非流式</p></div>
-<div class="endpoint"><span class="method get">GET</span><span class="path">/v1/models</span><p class="desc">获取可用模型列表</p></div>
-<div class="endpoint"><span class="method get">GET</span><span class="path">/health</span><p class="desc">健康检查</p></div>
-<div class="endpoint"><span class="method get">GET</span><span class="path">/get-token.html</span><p class="desc">获取 userToken 工具页</p></div>
+<p class="subtitle">OpenAI 兼容的 DeepSeek Web Chat API 代理 — 已启用自动 POW 求解</p>
+<div class="status"><div class="dot"></div><span>服务运行中 · POW 自动处理</span></div>
 </div>
-<div class="section">
+
+<div class="card">
+<h2>接口列表</h2>
+<div class="endpoint"><span class="method post">POST</span><span class="path">/v1/chat/completions</span><span class="desc">聊天完成（自动处理 POW）</span></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/v1/models</span><span class="desc">模型列表</span></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/v1/pow-challenge</span><span class="desc">获取 POW 挑战（高级用法）</span></div>
+<div class="endpoint"><span class="method get">GET</span><span class="path">/get-token.html</span><span class="desc">获取 userToken 工具页</span></div>
+</div>
+
+<div class="card">
 <h2>支持模型</h2>
 <div class="models">
 <span class="model-tag">deepseek-v4-flash</span><span class="model-tag">deepseek-v4-pro</span><span class="model-tag">deepseek-r1</span><span class="model-tag">deepseek-chat</span><span class="model-tag">deepseek-reasoner</span>
 </div>
 </div>
-<div class="section">
-<h2>快速使用</h2>
-<pre><span class="comment"># cURL</span>
-curl -X POST https://<span class="key">your-domain</span>/v1/chat/completions \\
-  -H <span class="str">"Content-Type: application/json"</span> \\
-  -d <span class="str">'{"model":"deepseek-v4-flash","messages":[{"role":"user","content":"Hello"}]}'</span>
 
-<span class="comment"># Python (OpenAI SDK)</span>
-<span class="key">from</span> openai <span class="key">import</span> OpenAI
-client = OpenAI(base_url=<span class="str">"https://your-domain/v1"</span>, api_key=<span class="str">"any"</span>)
-response = client.chat.completions.create(model=<span class="str">"deepseek-v4-flash"</span>, messages=[{<span class="str">"role"</span>:<span class="str">"user"</span>,<span class="str">"content"</span>:<span class="str">"Hello"</span>}])</pre>
+<div class="card">
+<h2>Trae 配置</h2>
+<pre><span class="comment">API 地址：</span><span class="str">https://<span id="domainSpan">your-domain</span>/v1</span>
+<span class="comment">API Key：</span><span class="str">sk-any</span>（未设置 API_KEY 时随意填）
+<span class="comment">模型：</span>deepseek-v4-flash</pre>
 </div>
-<div class="status"><div class="dot"></div><span>服务运行中</span></div>
 </div>
+<script>
+document.getElementById('domainSpan').textContent = location.host;
+</script>
 </body>
 </html>`;
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
