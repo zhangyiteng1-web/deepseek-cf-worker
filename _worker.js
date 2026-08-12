@@ -352,10 +352,16 @@ async function getPowChallenge(env) {
 // ====== 聊天代理 ======
 async function handleChatCompletion(body, env) {
   const session = await getOrCreateSession(env);
-  const challenge = await getPowChallenge(env);
-  const powAnswer = solvePow(challenge);
-  const powHeader = encodePowAnswer(powAnswer);
   const token = await getAccessToken(env);
+  
+  // Check if client provided a pre-computed POW answer (from body._pow_response)
+   let powHeader = body._pow_response || '';
+  if (!powHeader) {
+    const challenge = await getPowChallenge(env);
+    const powAnswer = solvePow(challenge);
+    powHeader = encodePowAnswer(powAnswer);
+  }
+  
   const prompt = messagesToPrompt(body.messages);
   const modelType = mapModelType(body.model);
   const thinkingEnabled = shouldEnableThinking(body.model, body.thinking, body.reasoning_effort);
@@ -387,10 +393,16 @@ async function handleChatCompletion(body, env) {
 
 async function handleStreamCompletion(body, env) {
   const session = await getOrCreateSession(env);
-  const challenge = await getPowChallenge(env);
-  const powAnswer = solvePow(challenge);
-  const powHeader = encodePowAnswer(powAnswer);
   const token = await getAccessToken(env);
+  
+  // Check if client provided a pre-computed POW answer
+  let powHeader = body._pow_response || '';
+  if (!powHeader) {
+    const challenge = await getPowChallenge(env);
+    const powAnswer = solvePow(challenge);
+    powHeader = encodePowAnswer(powAnswer);
+  }
+  
   const prompt = messagesToPrompt(body.messages);
   const modelType = mapModelType(body.model);
   const thinkingEnabled = shouldEnableThinking(body.model, body.thinking, body.reasoning_effort);
@@ -818,6 +830,15 @@ export default {
 
     try {
       if (path === '/health') return jsonResponse({ status: 'ok', timestamp: Date.now() });
+      if (path === '/v1/pow-challenge') {
+        try {
+          const session = await getOrCreateSession(env);
+          const challenge = await getPowChallenge(env);
+          return jsonResponse({ session_id: session.sessionId, ...challenge });
+        } catch (e) {
+          return jsonResponse({ error: e.message }, 500);
+        }
+      }
       if (path === '/v1/models') return jsonResponse({ object: 'list', data: MODELS });
       if (path === '/get-token.html') return serveTokenPage();
       if (path === '/') return serveHomePage();
@@ -834,6 +855,10 @@ export default {
           return jsonResponse({ error: { message: 'messages is required', type: 'invalid_request_error' } }, 400);
         }
         if (!body.model) body.model = 'deepseek-v4-flash';
+
+        // Inject POW answer from header if provided
+        const clientPow = request.headers.get('x-ds-pow-response');
+        if (clientPow) body._pow_response = clientPow;
 
         if (body.stream) return handleStreamCompletion(body, env);
         return handleChatCompletion(body, env);
